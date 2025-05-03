@@ -10,8 +10,15 @@ class GeneratePdfButton extends StatelessWidget {
   final TextEditingController clientController;
   final TextEditingController projectController;
   final List<Map<String, TextEditingController>> services;
+  final String selectedPaymentMethod; // Ganti dengan string untuk selectedPaymentMethod
 
-  const GeneratePdfButton({super.key, required this.clientController, required this.projectController, required this.services});
+  const GeneratePdfButton({
+    super.key,
+    required this.clientController,
+    required this.projectController,
+    required this.services,
+    required this.selectedPaymentMethod, // Tambahkan parameter baru
+  });
 
   String _formatRupiah(String value) {
     try {
@@ -42,6 +49,12 @@ class GeneratePdfButton extends StatelessWidget {
       }
     }
 
+    // Gantilah pengecekan paymentMethodController.text.isEmpty
+    if (selectedPaymentMethod.isEmpty) {
+      _showSnackbar(context, 'Mohon pilih metode pembayaran.');
+      return;
+    }
+
     final pdf = pw.Document();
     final today = DateTime.now();
     final formattedDate = "${today.day.toString().padLeft(2, '0')}-${today.month.toString().padLeft(2, '0')}-${today.year}";
@@ -53,6 +66,8 @@ class GeneratePdfButton extends StatelessWidget {
     final totalHarga = services.fold(0, (sum, service) {
       return sum + int.tryParse(service['price']!.text.replaceAll(RegExp(r'[^0-9]'), ''))!;
     });
+
+    final dpAmount = (totalHarga * 0.3).round();
 
     pdf.addPage(
       pw.MultiPage(
@@ -91,6 +106,17 @@ class GeneratePdfButton extends StatelessWidget {
               pw.Text('Rp ${_formatRupiah(totalHarga.toString())}', style: pw.TextStyle(fontSize: 14)),
             ],
           ),
+          pw.SizedBox(height: 12),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.end,
+            children: [
+              pw.Text('DP (30%): ', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+              pw.Text('Rp ${_formatRupiah(dpAmount.toString())}', style: pw.TextStyle(fontSize: 12)),
+            ],
+          ),
+          pw.SizedBox(height: 12),
+          pw.Text('Metode Pembayaran:', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold)),
+          pw.Text(selectedPaymentMethod, style: pw.TextStyle(fontSize: 12)),  // Gantilah dengan selectedPaymentMethod
           pw.SizedBox(height: 32),
           pw.Text('Terima kasih atas kepercayaannya!', style: pw.TextStyle(fontSize: 12, fontStyle: pw.FontStyle.italic)),
         ],
